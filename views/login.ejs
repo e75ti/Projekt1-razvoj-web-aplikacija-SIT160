@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Prijava</title>
+</head>
+<body>
+    <h1>Sistem Putovanja</h1>
+    
+    <% if (greska) { %>
+        <p style="color: red; font-weight: bold;"><%= greska %></p>
+    <% } %>
+
+    <form action="/login" method="POST">
+        <label>Korisničko ime ili Email:</label><br>
+        <input type="text" name="korisnicko_ime" required><br><br>
+        
+        <label>Lozinka:</label><br>
+        <input type="password" name="lozinka" required><br><br>
+        
+        <button type="submit">Prijavi se</button>
+    </form>
+    
+    <hr>
+    <p>Nemaš račun? <a href="/registracija">Registruj se</a></p>
+
+    <hr>
+    <h4>Zaboravili ste lozinku?</h4>
+    <form action="/zaboravljena-lozinka" method="POST">
+        <input type="email" name="email" placeholder="Unesite vas email" required>
+        <button type="submit">Pošalji novu lozinku</button>
+    </form>
+</body>
+</html>

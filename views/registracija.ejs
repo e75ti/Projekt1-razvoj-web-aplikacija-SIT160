@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Registracija</title>
+</head>
+<body>
+    <h1>Registracija na sistem</h1>
+    
+    <% if (greska) { %>
+        <p style="color: red; font-weight: bold;"><%= greska %></p>
+    <% } %>
+
+    <form action="/registracija" method="POST">
+        <label>Tip korisnika:</label><br>
+        <!-- select menu za odabir -->
+        <select name="tip_korisnika" id="tipSelect" onchange="pokaziAgencijaPolja()" required>
+            <option value="osoba">Osoba</option>
+            <option value="agencija">Agencija</option>
+        </select><br><br>
+
+        <label>Ime i prezime / Naziv agencije:</label><br>
+        <input type="text" name="ime_prezime_ili_naziv" required><br><br>
+
+        <label>Korisničko ime:</label><br>
+        <input type="text" name="korisnicko_ime" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+
+        <div id="agencijaPolja" style="display: none;">
+            <label>Datum osnivanja (samo agencije):</label><br>
+            <input type="date" name="datum_osnivanja"><br><br>
+        </div>
+
+        <label>Lozinka:</label><br>
+        <input type="password" name="lozinka" required><br><br>
+
+        <label>Ponovite lozinku:</label><br>
+        <input type="password" name="lozinka_ponovno" required><br><br>
+
+        <button type="submit">Registruj se</button>
+    </form>
+
+    <br>
+    <a href="/login">Nazad na prijavu</a>
+
+    <!-- sklanjam polje za datum ako nije odabrana agencija -->
+    <script>
+        function pokaziAgencijaPolja() {
+            var tip = document.getElementById('tipSelect').value;
+            var polja = document.getElementById('agencijaPolja');
+            if(tip === 'agencija') {
+                polja.style.display = 'block';
+            } else {
+                polja.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

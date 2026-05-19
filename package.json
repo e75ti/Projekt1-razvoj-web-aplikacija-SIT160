@@ -1,0 +1,29 @@
+{
+  "name": "projekt_sit160",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e75ti/Projekt1-razvoj-web-aplikacija-SIT160.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/e75ti/Projekt1-razvoj-web-aplikacija-SIT160/issues"
+  },
+  "homepage": "https://github.com/e75ti/Projekt1-razvoj-web-aplikacija-SIT160#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.11.1",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "nodemailer": "^9.0.1",
+    "pdfkit": "^0.19.1"
+  }
+}

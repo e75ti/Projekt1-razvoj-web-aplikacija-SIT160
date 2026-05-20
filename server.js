@@ -7,9 +7,9 @@ const db = require('./baza_i_funkcije/baza');
 const app = express();
 const PORT = 3000;
 
-// ubacim default inicijalizaciju
+// Konfiguracija EJS-a
 app.set('view engine', 'ejs');
-app.set('views');
+app.set('views', path.join(__dirname, 'views')); // FIX: Ovdje smo dodali tačnu putanju
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -32,6 +32,38 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     if (!req.session.korisnik) return res.redirect('/login');
     res.render('pocetna');
+});
+
+// NOVA RUTA: Endpoint za dohvatanje markera kao GeoJSON (specifikacija)
+app.get('/api/markeri', (req, res) => {
+    if (!req.session.korisnik) return res.json([]);
+
+    try {
+        // Uzimamo sva putovanja sa koordinatama
+        const putovanja = db.prepare('SELECT id, naslov, lat, lng FROM putovanja WHERE lat IS NOT NULL AND lng IS NOT NULL').all();
+        
+        // Formatiramo podatke u GeoJSON format kako je trazeno u specifikaciji
+        // (Izvor za format: https://geojson.org/)
+        const geojson = {
+            type: "FeatureCollection",
+            features: putovanja.map(p => ({
+                type: "Feature",
+                geometry: {
+                    type: "Point",
+                    coordinates: [p.lng, p.lat] // Paziti: GeoJSON ide [longitude, latitude]
+                },
+                properties: {
+                    naslov: p.naslov,
+                    id: p.id
+                }
+            }))
+        };
+        
+        res.json(geojson);
+    } catch (err) {
+        console.error(err);
+        res.json({ type: "FeatureCollection", features: [] });
+    }
 });
 
 // forma za login sa ispravnim renderom

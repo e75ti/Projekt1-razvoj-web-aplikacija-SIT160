@@ -1,0 +1,43 @@
+/* CSS varijable za rjesavanje dark/light moda (MDN Web Docs) */
+:root {
+    --pozadina: #ffffff;
+    --tekst: #222222;
+    --link: #0056b3;
+}
+
+[data-tema="tamna"] {
+    --pozadina: #1a1a1a;
+    --tekst: #f4f4f4;
+    --link: #82b1ff;
+}
+
+body {
+    background-color: var(--pozadina);
+    color: var(--tekst);
+    font-family: Arial, sans-serif;
+    margin: 20px auto;
+    max-width: 900px; /* pomaze da centriram */
+    line-height: 1.5;
+}
+
+a {
+    color: var(--link);
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+a:hover { text-decoration: underline; }
+
+header, nav {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* div gdje ce ucitati Leaflet mapa */
+#mapa {
+    height: 400px;
+    width: 100%;
+    background-color: #eee;
+    border: 1px solid #ccc;
+}

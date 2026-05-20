@@ -2,11 +2,101 @@
 <html lang="bs">
 <head>
     <meta charset="UTF-8">
-    <title>Početna</title>
+    <title>Početna - Projekat Putovanja</title>
+    <link rel="stylesheet" href="/stil.css">
+    
+    <!-- Leaflet CSS (Besplatna mapa - izvor: leafletjs.com) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-    <h1>Dobrodošli u Putovanja</h1>
-    <p>Ulogovani ste kao: <%= prijavljeniKorisnik.ime_prezime_ili_naziv %> (<%= prijavljeniKorisnik.tip_korisnika %>)</p>
-    <a href="/logout">Odjavi se</a>
+
+    <header>
+        <h2>Sistem Putovanja</h2>
+        <p>
+            Korisnik: <strong><%= prijavljeniKorisnik.ime_prezime_ili_naziv %></strong> 
+            (<%= prijavljeniKorisnik.tip_korisnika %>)
+        </p>
+        <!-- Vanilla JS toggle za temu -->
+        <button id="toggleTema">Promijeni u Tamnu temu</button>
+    </header>
+
+    <nav>
+        <a href="/">Početna</a>
+        <a href="/moja-putovanja">Moja putovanja</a>
+        <a href="/planirana-putovanja">Planirana putovanja</a>
+        <a href="/postavke">Postavke</a>
+        <a href="/logout" style="color: red;">Odjavi se</a>
+    </nav>
+
+    <main>
+        <h3>Karta nedavnih destinacija</h3>
+        <p>Klikni na mapu da bi kreirao novo putovanje (TODO).</p>
+        
+        <!-- ovdje ce Leaflet ubaciti mapu -->
+        <div id="mapa"></div>
+    </main>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        /* --- KOD ZA TEMU (Sacuvanje u localStorage) --- */
+        const temaBtn = document.getElementById('toggleTema');
+        const trenutnaTema = localStorage.getItem('tema');
+        
+        if (trenutnaTema === 'tamna') {
+            document.body.setAttribute('data-tema', 'tamna');
+            temaBtn.innerText = 'Promijeni u Svijetlu temu';
+        }
+
+        temaBtn.addEventListener('click', () => {
+            let trenutna = document.body.getAttribute('data-tema');
+            if (trenutna === 'tamna') {
+                document.body.removeAttribute('data-tema');
+                localStorage.setItem('tema', 'svijetla');
+                temaBtn.innerText = 'Promijeni u Tamnu temu';
+            } else {
+                document.body.setAttribute('data-tema', 'tamna');
+                localStorage.setItem('tema', 'tamna');
+                temaBtn.innerText = 'Promijeni u Svijetlu temu';
+            }
+        });
+
+        /* --- KOD ZA LEAFLET MAPU (izvor: docs.leafletjs.com) --- */
+        // postavljamo sarajevo kao pocetni centar mape (lat, lng, zoom level)
+        var map = L.map('mapa').setView([43.8563, 18.4131], 6);
+
+        // ucitavanje besplatnih OpenStreetMap plocica
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap' // nisam siguran da li treba ali sam vidio da drugi stavljaju pa sam i ja
+        }).addTo(map);
+
+        // dohvacanje markera (GeoJSON) sa backend Express servera
+        // fetch API (MDN)
+        fetch('/api/markeri')
+            .then(response => response.json())
+            .then(data => {
+                // ako ima podataka, Leaflet automatski cita GeoJSON format
+                L.geoJSON(data, {
+                    onEachFeature: function (feature, layer) {
+                        // dodaj tooltip na svaki marker
+                        layer.bindPopup("<b>" + feature.properties.naslov + "</b>");
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error("Greška pri učitavanju markera:", err));
+
+        // detekcija klika na mapu za dodavanje novog putovanja (Specifikacija)
+        map.on('click', function(e) {
+            // izbaci mi u alert
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            if(confirm("Kreiraj novo putovanje na ovoj lokaciji?\\nLat: " + lat + "\\nLng: " + lng)) {
+                // prebaci na formu sa parametrima u URL-u
+                window.location.href = `/dodaj-putovanje?lat=${lat}&lng=${lng}`;
+            }
+        });
+    </script>
 </body>
 </html>

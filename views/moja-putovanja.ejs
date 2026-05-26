@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Moja Putovanja</title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header><h2>Sistem Putovanja</h2></header>
+    <nav><a href="/">Početna</a> <a href="/moja-putovanja">Moja putovanja</a> <a href="/postavke">Postavke</a> <a href="/logout">Odjavi se</a></nav>
+
+    <main>
+        <h3><%= prijavljeniKorisnik.tip_korisnika === 'agencija' ? 'Vaša Organizovana Putovanja' : 'Putovanja na koja ste išli' %></h3>
+        
+        <!-- GET forma za sortiranje i pretragu (pišu da je preporucen standard ovako) -->
+        <form action="/moja-putovanja" method="GET" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+            <label>Pretraga po naslovu:</label>
+            <input type="text" name="pretraga" value="<%= pretraga %>" placeholder="Unesite naslov...">
+            
+            <label>Sortiraj po:</label>
+            <select name="sort">
+                <option value="datum" <%= sort === 'datum' ? 'selected' : '' %>>Datumu</option>
+                <option value="cijena" <%= sort === 'cijena' ? 'selected' : '' %>>Cijeni</option>
+                <option value="naslov" <%= sort === 'naslov' ? 'selected' : '' %>>Naslovu</option>
+            </select>
+            
+            <button type="submit">Primijeni</button>
+            <a href="/moja-putovanja">Poništi filtere</a>
+        </form>
+
+        <hr>
+
+        <ul>
+            <% if (putovanja.length === 0) { %>
+                <p>Trenutno nema takvih putovanja u bazi.</p>
+            <% } %>
+
+            <% for(let p of putovanja) { %>
+                <li style="margin-bottom: 20px; padding: 10px; border: 1px dashed #777;">
+                    <strong><%= p.naslov %></strong> - <%= p.datum %> 
+                    <% if(p.status) { %> (Status: <b><%= p.status %></b>) <% } %>
+                    <br>
+                    <small>Prevoz: <%= p.prevoz || '/' %> | Tip: <%= p.tip_putovanja || '/' %> | Max Cijena: <%= p.cijena || '0' %> KM</small>
+                    <br>
+                    <p><i><%= p.opis %></i></p>
+                </li>
+            <% } %>
+        </ul>
+    </main>
+
+    <script>
+        if (localStorage.getItem('tema') === 'tamna') document.body.setAttribute('data-tema', 'tamna');
+    </script>
+</body>
+</html>

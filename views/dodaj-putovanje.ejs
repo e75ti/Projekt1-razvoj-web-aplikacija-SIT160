@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj Putovanje - Sistem Putovanja</title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header><h2>Sistem Putovanja</h2></header>
+    <nav><a href="/">Početna</a> <a href="/moja-putovanja">Moja putovanja</a> <a href="/postavke">Postavke</a> <a href="/logout">Odjavi se</a></nav>
+
+    <main>
+        <h3>Kreiranje novog putovanja</h3>
+        <form action="/dodaj-putovanje" method="POST">
+            <label>Naslov lokacije:</label><br>
+            <input type="text" name="naslov" required><br><br>
+
+            <label>Opis:</label><br>
+            <textarea name="opis" rows="3" cols="30" required></textarea><br><br>
+
+            <label>Datum putovanja:</label><br>
+            <input type="date" name="datum" required><br><br>
+
+            <label>Tip (samostalno, organizovano):</label><br>
+            <input type="text" name="tip_putovanja"><br><br>
+
+            <label>Prevoz (npr. Avion, Autobus...):</label><br>
+            <input type="text" name="prevoz"><br><br>
+
+            <label>Maksimalna cijena (u KM):</label><br>
+            <input type="number" name="cijena"><br><br>
+
+            <!-- skrivena/zakljucana polja za koordinate jer se uzimaju sa mape -->
+            <label>Geografska širina (lat):</label>
+            <input type="text" name="lat" value="<%= lat %>" readonly style="background-color: #ddd;">
+            <label>Geografska dužina (lng):</label>
+            <input type="text" name="lng" value="<%= lng %>" readonly style="background-color: #ddd;"><br><br>
+
+            <!-- ako je ulogovana obična osoba, mora izabrati agenciju kojoj šalje zahtjev -->
+            <% if (prijavljeniKorisnik.tip_korisnika === 'osoba') { %>
+                <label>Odaberi Agenciju kojoj predaješ zahtjev:</label><br>
+                <select name="agencija_id" required>
+                    <option value="">-- Izaberi agenciju --</option>
+                    <% for(let a of agencije) { %>
+                        <option value="<%= a.id %>"><%= a.ime_prezime_ili_naziv %></option>
+                    <% } %>
+                </select><br><br>
+            <% } %>
+
+            <button type="submit">Spasi Putovanje</button>
+        </form>
+    </main>
+
+    <!-- mala skripta da povučen dark mode i ovdje -->
+    <script>
+        if (localStorage.getItem('tema') === 'tamna') document.body.setAttribute('data-tema', 'tamna');
+    </script>
+</body>
+</html>

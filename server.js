@@ -7,9 +7,9 @@ const db = require('./baza_i_funkcije/baza');
 const app = express();
 const PORT = 3000;
 
-// Konfiguracija EJS-a
+// ubacim default inicijalizaciju
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views')); // FIX: Ovdje smo dodali tačnu putanju
+app.set('views');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -34,23 +34,103 @@ app.get('/', (req, res) => {
     res.render('pocetna');
 });
 
-// NOVA RUTA: Endpoint za dohvatanje markera kao GeoJSON (specifikacija)
+// forma za dodavanje putovanja
+app.get('/dodaj-putovanje', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    
+    // trebaju nam sve agencije za listu da bi ih korisnik mogao odabrati
+    const agencije = db.prepare("SELECT id, ime_prezime_ili_naziv FROM korisnici WHERE tip_korisnika = 'agencija'").all();
+    
+    // dodajemo lat i lng iz URL query parametara (koji dođu sa klika mape)
+    res.render('dodaj-putovanje', { 
+        agencije: agencije,
+        lat: req.query.lat || '', 
+        lng: req.query.lng || ''
+    });
+});
+
+// obrada dodavanja putovanja (POST)
+app.post('/dodaj-putovanje', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+
+    const { naslov, opis, datum, tip_putovanja, prevoz, cijena, lat, lng, agencija_id } = req.body;
+
+    // ako dodaje agencija, ona kreira za sebe, a ako dodaje osoba, koristi se odabrani agencija_id
+    // vidio sam da preporučuju da se koristi ovo https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_operator
+    // pa sam prekopirao tako kod
+    const stvarnaAgencijaId = req.session.korisnik.tip_korisnika === 'agencija' ? req.session.korisnik.id : agencija_id;
+
+    // ubacujemo u bazu novo putovanje
+    const ubaci = db.prepare(`
+        INSERT INTO putovanja (naslov, opis, datum, tip_putovanja, prevoz, cijena, lat, lng, agencija_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const rezultat = ubaci.run(naslov, opis, datum, tip_putovanja, prevoz, cijena, lat, lng, stvarnaAgencijaId);
+
+    // ako je korisnik taj koji pravi putovanje, automatski ga pišemo u tabelu "prijave", gdje mu
+    // status ide na "na cekanju" (ovo ce agencija poslije vidjeti kao zahtjev)
+    if (req.session.korisnik.tip_korisnika === 'osoba') {
+        db.prepare(`INSERT INTO prijave (korisnik_id, putovanje_id, status) VALUES (?, ?, 'na cekanju')`)
+          .run(req.session.korisnik.id, rezultat.lastInsertRowid); // lastInsertRowid vraca ID zadnjeg inserta iz SQLite-a
+    }
+
+    res.redirect('/moja-putovanja');
+});
+
+// moja putovanja (sa osnovnom pretragom i sortiranjem)
+app.get('/moja-putovanja', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+
+    // defaultne vrijednosti iz URL-a (stackOverflow question: object destructuring za req.query #71919542)
+    const { pretraga = '', sort = 'datum' } = req.query; 
+
+    let upit = "";
+    let parametri = [];
+    // https://www.sqlitetutorial.net/sqlite-like/
+    const poljeZaPretragu = `%${pretraga}%`; // SQLite format za LIKE '%string%'
+
+    if (req.session.korisnik.tip_korisnika === 'agencija') {
+        // agencija vidi sva svoja kreirana putovanja
+        upit = `SELECT * FROM putovanja WHERE agencija_id = ? AND naslov LIKE ? ORDER BY ${sort} ASC`;
+        parametri = [req.session.korisnik.id, poljeZaPretragu];
+    } else {
+        // osoba vidi putovanja na koja je prijavljeno (JOIN na tabelu prijave)
+        upit = `
+            SELECT p.*, pr.status 
+            FROM putovanja p 
+            JOIN prijave pr ON p.id = pr.putovanje_id 
+            WHERE pr.korisnik_id = ? AND p.naslov LIKE ?
+            ORDER BY p.${sort} ASC
+        `;
+        parametri = [req.session.korisnik.id, poljeZaPretragu];
+    }
+
+    const putovanja = db.prepare(upit).all(...parametri);
+
+    res.render('moja-putovanja', { 
+        putovanja: putovanja, 
+        pretraga: pretraga, 
+        sort: sort 
+    });
+});
+
+// endpoint za markere GeoJSON
 app.get('/api/markeri', (req, res) => {
     if (!req.session.korisnik) return res.json([]);
 
     try {
-        // Uzimamo sva putovanja sa koordinatama
+        // uzimamo sva putovanja sa koordinatama
         const putovanja = db.prepare('SELECT id, naslov, lat, lng FROM putovanja WHERE lat IS NOT NULL AND lng IS NOT NULL').all();
         
-        // Formatiramo podatke u GeoJSON format kako je trazeno u specifikaciji
-        // (Izvor za format: https://geojson.org/)
+        // formatiramo podatke u GeoJSON format kako je trazeno u specifikaciji
+        // uzeo sam format iz https://geojson.org/
         const geojson = {
             type: "FeatureCollection",
             features: putovanja.map(p => ({
                 type: "Feature",
                 geometry: {
                     type: "Point",
-                    coordinates: [p.lng, p.lat] // Paziti: GeoJSON ide [longitude, latitude]
+                    coordinates: [p.lng, p.lat] // longituta latituda (provjeri duplo da se ne zeznem opet)
                 },
                 properties: {
                     naslov: p.naslov,

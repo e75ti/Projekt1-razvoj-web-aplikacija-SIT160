@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Postavke Sistema</title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header><h2>Sistem Putovanja</h2></header>
+    <nav>
+        <a href="/">Početna</a> 
+        <a href="/moja-putovanja">Moja putovanja</a> 
+        <a href="/planirana-putovanja">Planirana putovanja</a> 
+        <a href="/postavke">Postavke</a> 
+        <a href="/logout">Odjavi se</a>
+    </nav>
+
+    <main>
+        <h3>Postavke Profila</h3>
+        <p><i>Korisničko ime i e-mail adresa se ne mogu mijenjati!</i></p>
+
+        <!-- forma za update -->
+        <form action="/postavke" method="POST" style="border: 1px solid #ccc; padding: 15px; max-width: 400px;">
+            <label>Korisničko ime:</label><br>
+            <!-- disabled ili readonly sluzi da se forma ne moze editovati (specifikacija) -->
+            <input type="text" value="<%= prijavljeniKorisnik.korisnicko_ime %>" disabled style="background-color: #eee;"><br><br>
+
+            <label>E-mail:</label><br>
+            <input type="email" value="<%= prijavljeniKorisnik.email %>" disabled style="background-color: #eee;"><br><br>
+
+            <label>Ime i prezime / Naziv agencije:</label><br>
+            <input type="text" name="ime_prezime_ili_naziv" value="<%= prijavljeniKorisnik.ime_prezime_ili_naziv %>" required><br><br>
+
+            <button type="submit">Sačuvaj promjene</button>
+        </form>
+
+        <hr>
+
+        <!-- specifikacija: informacije o studentu -->
+        <h3>O Studentu / Predmetu</h3>
+        <div style="background-color: #f9f9f9; padding: 15px; border: 1px dashed #666; max-width: 400px; color: #222;">
+            <p><strong>Projekat:</strong> Putovanja</p>
+            <p><strong>Predmet:</strong> Razvoj web aplikacija</p>
+            <p><strong>Akademska godina:</strong> 2025/2026</p>
+            <p><strong>Fakultet:</strong> Prirodno-matematički fakultet, Sarajevo</p>
+            <p><strong>Student:</strong> Tuco Imad</p>
+            <p><strong>Profesorica:</strong> Eldina Delalić </p>
+        </div>
+    </main>
+
+    <script>
+        if (localStorage.getItem('tema') === 'tamna') document.body.setAttribute('data-tema', 'tamna');
+    </script>
+</body>
+</html>

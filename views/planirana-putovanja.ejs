@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title>Planirana Putovanja</title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header><h2>Sistem Putovanja</h2></header>
+    <nav>
+        <a href="/">Početna</a> 
+        <a href="/moja-putovanja">Moja putovanja</a> 
+        <a href="/planirana-putovanja">Planirana putovanja</a> 
+        <a href="/postavke">Postavke</a> 
+        <a href="/logout">Odjavi se</a>
+    </nav>
+
+    <main>
+        <h3>Planirana Putovanja (Budućnost)</h3>
+
+        <form action="/planirana-putovanja" method="GET" style="margin-bottom: 20px; border: 1px solid #ccc; padding: 10px;">
+            <label>Pretraga po naslovu:</label>
+            <input type="text" name="pretraga" value="<%= pretraga %>" placeholder="Pretraga...">
+            
+            <label>Sortiraj:</label>
+            <select name="sort">
+                <option value="datum" <%= sort === 'datum' ? 'selected' : '' %>>Po Datumu</option>
+                <option value="naslov" <%= sort === 'naslov' ? 'selected' : '' %>>Po Naslovu</option>
+            </select>
+            <button type="submit">Filtriraj</button>
+            <a href="/planirana-putovanja">Poništi</a>
+        </form>
+
+        <% if (prijavljeniKorisnik.tip_korisnika === 'agencija') { %>
+            <h4>Putovanja koja organizujete i primljeni zahtjevi:</h4>
+            <ul>
+                <% for (let stavka of listaZaAgenciju) { %>
+                    <li style="margin-bottom: 15px; border: 1px solid #999; padding: 10px;">
+                        <strong><%= stavka.naslov %></strong> - <%= stavka.datum %> 
+                        <form action="/obrisi-putovanje" method="POST" style="display:inline; float:right;">
+                            <input type="hidden" name="putovanje_id" value="<%= stavka.id %>">
+                            <button type="submit" style="color:red;">Obriši</button>
+                        </form>
+                        <br>
+                        <% if (stavka.prijava_id) { %>
+                            <p>Zahtjev od: <b><%= stavka.korisnik_ime %></b> | Trenutni status: <i><%= stavka.status %></i></p>
+                            <!-- forma za agenciju da prihvati/odbije -->
+                            <form action="/promijeni-status" method="POST" style="display:inline;">
+                                <input type="hidden" name="prijava_id" value="<%= stavka.prijava_id %>">
+                                <button type="submit" name="novi_status" value="odobreno">Odobri</button>
+                                <button type="submit" name="novi_status" value="odbijeno" style="color:red;">Odbij</button>
+                            </form>
+                        <% } else { %>
+                            <p><i>- Nema prijava još uvijek -</i></p>
+                        <% } %>
+                    </li>
+                <% } %>
+            </ul>
+        <% } else { %>
+            <!-- prikaz za osobu -->
+            <h4>Vaše poslane prijave:</h4>
+            <ul>
+                <% for (let p of mojePrijave) { %>
+                    <li>
+                        <strong><%= p.naslov %></strong> (<%= p.datum %>) - Status: <b><%= p.status %></b>
+                        <form action="/obrisi-putovanje" method="POST" style="display:inline; margin-left:10px;">
+                            <input type="hidden" name="putovanje_id" value="<%= p.id %>">
+                            <button type="submit" style="color:red; font-size:12px;">Obriši svoje putovanje/zahtjev</button>
+                        </form>
+                    </li>
+                <% } %>
+            </ul>
+
+            <hr>
+
+            <h4>Dostupna putovanja od agencija na koja niste prijavljeni:</h4>
+            <ul>
+                <% for (let put of dostupnaPutovanja) { %>
+                    <li>
+                        <strong><%= put.naslov %></strong> - <%= put.datum %> | Max Cijena: <%= put.cijena %> KM
+                        <form action="/prijavi-se" method="POST" style="display:inline; margin-left: 15px;">
+                            <input type="hidden" name="putovanje_id" value="<%= put.id %>">
+                            <button type="submit">Prijavi se na putovanje</button>
+                        </form>
+                    </li>
+                <% } %>
+            </ul>
+        <% } %>
+    </main>
+
+    <script>
+        if (localStorage.getItem('tema') === 'tamna') document.body.setAttribute('data-tema', 'tamna');
+    </script>
+</body>
+</html>

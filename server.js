@@ -114,6 +114,104 @@ app.get('/moja-putovanja', (req, res) => {
     });
 });
 
+// -- planirana putovanja --
+app.get('/planirana-putovanja', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    
+    const { pretraga = '', sort = 'datum' } = req.query; 
+    const poljeZaPretragu = `%${pretraga}%`;
+    
+    const danas = new Date().toISOString().split('T')[0]; 
+
+    let dostupnaPutovanja = []; 
+    let mojePrijave = []; 
+    let listaZaAgenciju = []; 
+
+    if (req.session.korisnik.tip_korisnika === 'osoba') {
+        // putovanja na koja se može prijaviti (buduća, organizovana) a da već nije prijavljen (W3Schools Subquery)
+        dostupnaPutovanja = db.prepare(`
+            SELECT * FROM putovanja 
+            WHERE datum >= ? AND naslov LIKE ? AND id NOT IN (
+                SELECT putovanje_id FROM prijave WHERE korisnik_id = ?
+            )
+            ORDER BY ${sort} ASC
+        `).all(danas, poljeZaPretragu, req.session.korisnik.id);
+
+        // putovanja na koja je korisnik poslao zahtjev u budućnosti
+        mojePrijave = db.prepare(`
+            SELECT p.*, pr.status, pr.id AS prijava_id
+            FROM putovanja p
+            JOIN prijave pr ON p.id = pr.putovanje_id
+            WHERE pr.korisnik_id = ? AND p.datum >= ? AND p.naslov LIKE ?
+            ORDER BY p.${sort} ASC
+        `).all(req.session.korisnik.id, danas, poljeZaPretragu);
+
+    } else if (req.session.korisnik.tip_korisnika === 'agencija') {
+        // agencija vidi svoja buduća i status korisnika (koristim LEFT JOIN da prikaze i putovanja bez prijava)
+        listaZaAgenciju = db.prepare(`
+            SELECT p.*, pr.id as prijava_id, pr.status, k.ime_prezime_ili_naziv as korisnik_ime
+            FROM putovanja p
+            LEFT JOIN prijave pr ON p.id = pr.putovanje_id
+            LEFT JOIN korisnici k ON pr.korisnik_id = k.id
+            WHERE p.agencija_id = ? AND p.datum >= ? AND p.naslov LIKE ?
+            ORDER BY p.${sort} ASC
+        `).all(req.session.korisnik.id, danas, poljeZaPretragu);
+    }
+
+    res.render('planirana-putovanja', { 
+        dostupnaPutovanja, mojePrijave, listaZaAgenciju, pretraga, sort 
+    });
+});
+
+// prijavljivanje na putovanje
+app.post('/prijavi-se', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    const { putovanje_id } = req.body;
+    db.prepare("INSERT INTO prijave (korisnik_id, putovanje_id, status) VALUES (?, ?, 'na cekanju')")
+      .run(req.session.korisnik.id, putovanje_id);
+    res.redirect('/planirana-putovanja');
+});
+
+// agencija mijenja status (odobri/odbij)
+app.post('/promijeni-status', (req, res) => {
+    if (!req.session.korisnik || req.session.korisnik.tip_korisnika !== 'agencija') return res.redirect('/login');
+    const { prijava_id, novi_status } = req.body;
+    db.prepare("UPDATE prijave SET status = ? WHERE id = ?").run(novi_status, prijava_id);
+    res.redirect('/planirana-putovanja');
+});
+
+// brisanje putovanja
+app.post('/obrisi-putovanje', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    const { putovanje_id } = req.body;
+    // brisanje prijava prvo, da ne ostanu visak, pa onda putovanje
+    db.prepare("DELETE FROM prijave WHERE putovanje_id = ?").run(putovanje_id);
+    db.prepare("DELETE FROM putovanja WHERE id = ?").run(putovanje_id);
+    
+    // Express req.get('referer') vraća prethodnu stranicu pa nas samo refreshuje
+    const referer = req.get('referer'); 
+    res.redirect(referer || '/moja-putovanja');
+});
+
+// postavke i podaci o studentu
+app.get('/postavke', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    res.render('postavke');
+});
+
+// izmjena samo dozvoljenih polja iz postavki
+app.post('/postavke', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    const { ime_prezime_ili_naziv } = req.body;
+    
+    db.prepare("UPDATE korisnici SET ime_prezime_ili_naziv = ? WHERE id = ?")
+      .run(ime_prezime_ili_naziv, req.session.korisnik.id);
+    
+    // azuriranje session varijable da se novo ime odmah vidi na stranici
+    req.session.korisnik.ime_prezime_ili_naziv = ime_prezime_ili_naziv;
+    res.redirect('/postavke');
+});
+
 // endpoint za markere GeoJSON
 app.get('/api/markeri', (req, res) => {
     if (!req.session.korisnik) return res.json([]);

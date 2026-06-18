@@ -92,7 +92,7 @@ app.get('/moja-putovanja', (req, res) => {
     if (req.session.korisnik.tip_korisnika === 'agencija') {
         // agencija vidi sva svoja kreirana putovanja
         upit = `SELECT * FROM putovanja WHERE agencija_id = ? AND naslov LIKE ? ORDER BY ${sort} ASC`;
-        parametri = [req.session.korisnik.id, poljeZaPretraga];
+        parametri = [req.session.korisnik.id, poljeZaPretragu];
     } else {
         // osoba vidi putovanja na koja je prijavljeno (JOIN na tabelu prijave)
         upit = `
@@ -102,7 +102,7 @@ app.get('/moja-putovanja', (req, res) => {
             WHERE pr.korisnik_id = ? AND p.naslov LIKE ?
             ORDER BY p.${sort} ASC
         `;
-        parametri = [req.session.korisnik.id, poljeZaPretraga];
+        parametri = [req.session.korisnik.id, poljeZaPretragu];
     }
 
     const putovanja = db.prepare(upit).all(...parametri);

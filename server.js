@@ -92,7 +92,7 @@ app.get('/moja-putovanja', (req, res) => {
     if (req.session.korisnik.tip_korisnika === 'agencija') {
         // agencija vidi sva svoja kreirana putovanja
         upit = `SELECT * FROM putovanja WHERE agencija_id = ? AND naslov LIKE ? ORDER BY ${sort} ASC`;
-        parametri = [req.session.korisnik.id, poljeZaPretragu];
+        parametri = [req.session.korisnik.id, poljeZaPretraga];
     } else {
         // osoba vidi putovanja na koja je prijavljeno (JOIN na tabelu prijave)
         upit = `
@@ -102,7 +102,7 @@ app.get('/moja-putovanja', (req, res) => {
             WHERE pr.korisnik_id = ? AND p.naslov LIKE ?
             ORDER BY p.${sort} ASC
         `;
-        parametri = [req.session.korisnik.id, poljeZaPretragu];
+        parametri = [req.session.korisnik.id, poljeZaPretraga];
     }
 
     const putovanja = db.prepare(upit).all(...parametri);
@@ -217,8 +217,16 @@ app.get('/api/markeri', (req, res) => {
     if (!req.session.korisnik) return res.json([]);
 
     try {
-        // uzimamo sva putovanja sa koordinatama
-        const putovanja = db.prepare('SELECT id, naslov, lat, lng FROM putovanja WHERE lat IS NOT NULL AND lng IS NOT NULL').all();
+        // SQLite ima ugradjene funkcije za datume https://www.sqlitetutorial.net/sqlite-date-functions/sqlite-date-function/
+        const upit = `
+            SELECT id, naslov, lat, lng 
+            FROM putovanja 
+            WHERE lat IS NOT NULL 
+              AND lng IS NOT NULL 
+              AND datum >= date('now', '-30 days') 
+              AND datum <= date('now')
+        `;
+        const putovanja = db.prepare(upit).all();
         
         // formatiramo podatke u GeoJSON format kako je trazeno u specifikaciji
         // uzeo sam format iz https://geojson.org/

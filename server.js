@@ -186,13 +186,19 @@ app.post('/promijeni-status', (req, res) => {
     res.redirect('/planirana-putovanja');
 });
 
-// brisanje putovanja
+// brisanje putovanja ili povlacenje prijave
 app.post('/obrisi-putovanje', (req, res) => {
     if (!req.session.korisnik) return res.redirect('/login');
     const { putovanje_id } = req.body;
-    // brisanje prijava prvo, da ne ostanu visak, pa onda putovanje
-    db.prepare("DELETE FROM prijave WHERE putovanje_id = ?").run(putovanje_id);
-    db.prepare("DELETE FROM putovanja WHERE id = ?").run(putovanje_id);
+
+    if (req.session.korisnik.tip_korisnika === 'agencija') {
+        // agencija briše cijelo putovanje i sve prijave vezane za putovanje
+        db.prepare("DELETE FROM prijave WHERE putovanje_id = ?").run(putovanje_id);
+        db.prepare("DELETE FROM putovanja WHERE id = ? AND agencija_id = ?").run(putovanje_id, req.session.korisnik.id);
+    } else {
+        // obični korisnik briše samo svoju prijavu (otkazuje zahtjev)
+        db.prepare("DELETE FROM prijave WHERE putovanje_id = ? AND korisnik_id = ?").run(putovanje_id, req.session.korisnik.id);
+    }
     
     // Express req.get('referer') vraća prethodnu stranicu pa nas samo refreshuje
     const referer = req.get('referer'); 

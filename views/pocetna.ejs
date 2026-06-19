@@ -31,6 +31,16 @@
     <main>
         <h3>Karta nedavnih destinacija</h3>
         <p>Klikni na mapu da bi kreirao novo putovanje (TODO).</p>
+
+        <!-- dropdown zavrsenih putovanja -->
+        <label>Završena putovanja:</label>
+        <select id="prijasnjaPutovanja" onchange="centrirajMapu()">
+            <option value="">-- Izaberi putovanje --</option>
+            <% for(let p of zavrsenaPutovanja) { %>
+                <option value="<%= p.lat %>,<%= p.lng %>"><%= p.naslov %></option>
+            <% } %>
+        </select>
+        <br><br>
         
         <!-- ovdje ce Leaflet ubaciti mapu -->
         <div id="mapa"></div>
@@ -97,6 +107,16 @@
                 window.location.href = `/dodaj-putovanje?lat=${lat}&lng=${lng}`;
             }
         });
+
+        // JS FUNKCIJA KOJA REAGUJE NA DROPDOWN I CENTRIRA LEAFLET MAPU
+        // POSUDIO (:D) kod sa StackOverflow (https://stackoverflow.com/questions/38955803/how-to-center-map-on-marker-click-in-leaflet)
+        function centrirajMapu() {
+            const vrijednost = document.getElementById('prijasnjaPutovanja').value;
+            if (vrijednost) {
+                const koordinate = vrijednost.split(','); // rastavlja "lat,lng" u niz [lat, lng]
+                map.flyTo([parseFloat(koordinate[0]), parseFloat(koordinate[1])], 12); // animiran skok na mapu (Leaflet funkcija)
+            }
+        }
     </script>
 </body>
 </html>

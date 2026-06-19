@@ -7,7 +7,13 @@
 </head>
 <body>
     <header><h2>Sistem Putovanja</h2></header>
-    <nav><a href="/">Početna</a> <a href="/moja-putovanja">Moja putovanja</a> <a href="/postavke">Postavke</a> <a href="/logout">Odjavi se</a></nav>
+    <nav>
+        <a href="/">Početna</a> 
+        <a href="/moja-putovanja">Moja putovanja</a> 
+        <a href="/planirana-putovanja">Planirana putovanja</a> 
+        <a href="/postavke">Postavke</a> 
+        <a href="/logout">Odjavi se</a>
+    </nav>
 
     <main>
         <h3><%= prijavljeniKorisnik.tip_korisnika === 'agencija' ? 'Vaša Organizovana Putovanja' : 'Putovanja na koja ste išli' %></h3>

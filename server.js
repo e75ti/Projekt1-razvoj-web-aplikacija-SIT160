@@ -2,6 +2,8 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const PDFDocument = require('pdfkit');
 const db = require('./baza_i_funkcije/baza');
 
 const app = express();
@@ -31,7 +33,11 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
     if (!req.session.korisnik) return res.redirect('/login');
-    res.render('pocetna');
+    
+    // zavrsena putovanja (sva koja su prije danas) za dropdown meni na mapi
+    const zavrsenaPutovanja = db.prepare("SELECT id, naslov, lat, lng FROM putovanja WHERE datum < date('now') AND lat IS NOT NULL").all();
+    
+    res.render('pocetna', { zavrsenaPutovanja });
 });
 
 // forma za dodavanje putovanja

@@ -199,6 +199,60 @@ app.post('/obrisi-putovanje', (req, res) => {
     res.redirect(referer || '/moja-putovanja');
 });
 
+// ==== PDF GENERISANJE ====
+app.get('/putovanje/:id/pdf', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+    
+    const putovanje = db.prepare("SELECT * FROM putovanja WHERE id = ?").get(req.params.id);
+    if (!putovanje) return res.status(404).send("Putovanje nije pronađeno");
+
+    // kreiramo PDF
+    const doc = new PDFDocument();
+    
+    // ne downloada bez ovih headera
+    res.setHeader('Content-disposition', 'attachment; filename="putovanje_' + putovanje.id + '.pdf"');
+    res.setHeader('Content-type', 'application/pdf');
+
+    doc.pipe(res); // Šaljemo PDF direktno u response stream da se zapiše
+
+    doc.fontSize(25).text('Detalji Putovanja', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(16).text(`Naslov: ${putovanje.naslov}`);
+    doc.fontSize(14).text(`Datum: ${putovanje.datum}`);
+    doc.text(`Prevoz: ${putovanje.prevoz || '/'}`);
+    doc.text(`Tip putovanja: ${putovanje.tip_putovanja || '/'}`);
+    doc.text(`Cijena: ${putovanje.cijena} KM`);
+    doc.moveDown();
+    doc.text('Opis:');
+    doc.fontSize(12).text(putovanje.opis);
+
+    doc.end(); // Zavrsavamo pisanje u fajl
+});
+
+// pravljenje javnog linka
+app.post('/podijeli-putovanje/:id', (req, res) => {
+    if (!req.session.korisnik) return res.redirect('/login');
+
+    // token
+    const token = crypto.randomBytes(16).toString('hex');
+    
+    // spasavamo u bazu
+    db.prepare("UPDATE putovanja SET share_token = ?, is_public = 1 WHERE id = ?").run(token, req.params.id);
+    
+    res.redirect('/moja-putovanja');
+});
+
+// javna ruta za share (bez provjere prijave)
+app.get('/share/:token', (req, res) => {
+    const putovanje = db.prepare("SELECT * FROM putovanja WHERE share_token = ? AND is_public = 1").get(req.params.token);
+    
+    if (!putovanje) {
+        return res.status(404).send("<h1>Ovaj link ne postoji ili više nije javan.</h1>");
+    }
+
+    res.render('javno-putovanje', { putovanje });
+});
+
 // postavke i podaci o studentu
 app.get('/postavke', (req, res) => {
     if (!req.session.korisnik) return res.redirect('/login');

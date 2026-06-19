@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+    <meta charset="UTF-8">
+    <title><%= putovanje.naslov %></title>
+    <link rel="stylesheet" href="/stil.css">
+</head>
+<body>
+    <header>
+        <h2>Putovanja (Podijeljeno))</h2>
+    </header>
+
+    <main>
+        <h3><%= putovanje.naslov %></h3>
+        <p><strong>Datum:</strong> <%= putovanje.datum %></p>
+        <p><strong>Prevoz:</strong> <%= putovanje.prevoz || 'Nije navedeno' %></p>
+        <hr>
+        <p><%= putovanje.opis %></p>
+        
+        <br><br>
+        <i>Ovo je javni link putovanja.</i>
+        <br><br>
+        <a href="/login">Prijaviva</a>
+    </main>
+</body>
+</html>

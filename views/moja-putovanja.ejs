@@ -43,6 +43,19 @@
                     <small>Prevoz: <%= p.prevoz || '/' %> | Tip: <%= p.tip_putovanja || '/' %> | Max Cijena: <%= p.cijena || '0' %> KM</small>
                     <br>
                     <p><i><%= p.opis %></i></p>
+
+                    <!-- PDF i share -->
+                    <div style="margin-top: 10px; background-color: #f1f1f1; padding: 10px; display: inline-block;">
+                        <a href="/putovanje/<%= p.id %>/pdf" target="_blank" style="color: green; font-weight: bold;">[ Preuzmi PDF ]</a>
+                        
+                        <form action="/podijeli-putovanje/<%= p.id %>" method="POST" style="display:inline;">
+                            <button type="submit" style="font-size: 12px; cursor: pointer;">Generiši link</button>
+                        </form>
+
+                        <% if (p.share_token) { %>
+                            <br><small>Javni link: <a href="/share/<%= p.share_token %>" target="_blank">localhost:3000/share/<%= p.share_token %></a></small>
+                        <% } %>
+                    </div>
                 </li>
             <% } %>
         </ul>
